@@ -1,0 +1,30 @@
+{
+  "name": "craft-supplychain",
+  "version": "1.0.0",
+  "description": "Smart contracts for the craft supplychain project: https://github.com/jthommen/craft-supplychain",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jthommen/craft-supplychain.git"
+  },
+  "keywords": [
+    "craft",
+    "supplychain",
+    "dapp",
+    "ethereum"
+  ],
+  "author": "Juri Thommen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jthommen/craft-supplychain/issues"
+  },
+  "homepage": "https://github.com/jthommen/craft-supplychain#readme",
+  "dependencies": {
+    "openzeppelin-solidity": "^2.1.1",
+    "truffle": "^5.0.1",
+    "truffle-hdwallet-provider": "^1.0.2"
+  }
+}
