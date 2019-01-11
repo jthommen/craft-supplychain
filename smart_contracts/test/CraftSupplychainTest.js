@@ -5,117 +5,276 @@ contract('CraftSupplychain', accounts => {
     // Error catching from solidity
     let catchRevert = require('./exceptions.js').catchRevert;
     let defaultAccount = accounts[0];
+    
+    // Global setup
+    let craftsman1 = accounts[1];
+    let craftsman2 = accounts[2];
+    let time1 = 1547203344300;
+    let time2 = 1547203344400;
+    let craftHash1;
+    let craftHash2;
 
-    // Instantiate a new, fresh contract instance for every test
     beforeEach(async function() {
+        // Instantiate a new, fresh contract instance for every test
         this.contract = await CraftSupplychain.new({from: defaultAccount});
+
+        // Set up some basic crafts for all tests
+        let createTx = await this.contract.buyCraftMaterial('Scarf', 'Beautiful Pashmina Scarf', 'Nadash', 'Nepal', time1, {from: craftsman1});
+        // gas used: 262624 (11.01.2019: $0.072)
+        await this.contract.buyCraftMaterial('Wooden Box', 'Beautiful Wooden Box', 'Nadash', 'Nepal', time2, {from: craftsman1});  
+        craftHash1 = await this.contract.createIdHash('Scarf', 'Beautiful Pashmina Scarf', 'Nadash', 'Nepal', time1);
+        craftHash2 = await this.contract.createIdHash('Wooden Box', 'Beautiful Wooden Box', 'Nadash', 'Nepal', time2);
     });
 
     // Craftsmen
     describe('can produce a craft', function() {
-        let user1 = accounts[1];
-        let user2 = accounts[2];
-        let time1 = 1547203344300;
-        let time2 = 1547203344400;
-        let craftHash1;
 
-        beforeEach(async function() {
-            await this.contract.buyCraftMaterial('Scarf', 'Beautiful Pashmina Scarf', 'Nadash', 'Nepal', time1, {from: user1});
-            await this.contract.buyCraftMaterial('Wooden Box', 'Beautiful Wooden Box', 'Imar', 'Idonesia', time2, {from: user2});  
-            craftHash1 = await this.contract.createIdHash('Scarf', 'Beautiful Pashmina Scarf', 'Nadash', 'Nepal', time1);
-        });
-
+        // correct hash values are created, converted to strings to avoid BigNumber issues
         it('can generate the right hash', async function() {
             const testHash = '72362559462853359796339334205359118679826043531050551250546167185280409739434';
             assert.equal(craftHash1, testHash, 'Hashes generated from coordinates should be equal.');
           });
+        
+        let craftInfo;
+        
+        describe('can start production', function(){
 
-        it('can get raw materials & start production', async function() {
-            let craftInfo = await this.contract.getCraftInfo(craftHash1);
-            let converted = (craftInfo.prod_time).toString();
-            craftInfo.prod_time = converted;
-            craftInfo[5] = converted;
-
-            assert.deepEqual(
-                craftInfo,
-                {
-                    '0': 'Scarf',
-                    '1': 'Beautiful Pashmina Scarf',
-                    '2': 'Nadash',
-                    '3':  user1,
-                    '4': 'Nepal',
-                    '5': time1.toString(),
-                    description: 'Beautiful Pashmina Scarf',
-                    name: 'Scarf',
-                    producer: 'Nadash',
-                    producer_id:  user1,
-                    prod_loc: 'Nepal',
-                    prod_time: time1.toString()
-                }
-            )
+            beforeEach(async function() {
+                craftInfo = await this.contract.getCraftInfo(craftHash1);
+            });
+    
             // instantiation of new craft works, by getting raw material for craft
-            //await this.contract.buyCraftMaterial('Scarf', 'Beautiful Pashmina Scarf', 'Nadash', 'Nepal', time, {from: user1});
+            it('can get raw materials & start production', async function() {
+                let converted = (craftInfo.prod_time).toString();
+                craftInfo.prod_time = converted;
+                craftInfo[5] = converted;
+    
+                assert.deepEqual(
+                    craftInfo,
+                    {
+                        '0': 'Scarf',
+                        '1': 'Beautiful Pashmina Scarf',
+                        '2': 'Nadash',
+                        '3':  craftsman1,
+                        '4': 'Nepal',
+                        '5': time1.toString(),
+                        description: 'Beautiful Pashmina Scarf',
+                        name: 'Scarf',
+                        producer: 'Nadash',
+                        producer_id:  craftsman1,
+                        prod_loc: 'Nepal',
+                        prod_time: time1.toString()
+                    }
+                )
+            });
+
+            it('can start production process', async function() {
+                // can assign craft state to productionStarted
+                let state = await this.contract.getCraftState(craftHash1);
+                assert.equal(state, 0);
+            });
         });
 
-        it('can start production process', async function() {
-            // can assign craft state inProduction
+        describe('can finish production', function(){
+
+            beforeEach(async function() {
+            });
+            
+            it('can assign productionFinished state', async function() {
+                // can call produceCraft function
+                let updateTx = await this.contract.produceCraft(craftHash1, {from: craftsman1});
+                // gas used: 30174 (11.01.2019: $0.008)
+                
+                // can assign craft state finishedProduction
+                let craftState = await this.contract.getCraftState(craftHash1);
+                assert.equal(craftState, 1);
+            });
+
+            it('can not finish craft if not the producer', async function(){
+                await catchRevert(this.contract.produceCraft(craftHash1, {from: craftsman2}));
+            });
+
         });
 
-        it('can create a craft out of raw materials', async function() {
-            // can call createCraft function
-            // can assign craft state finishedProduction
-        });
 
-        it('can package a craft', async function() {
-            // can call packageCraft function
-            // can assign craft state packaged
-        });
+        describe('can package craft', function() {
 
-        it('can combine a craft', async function() {
-            // can call packageCraft function
-            // can assign craft state packaged
+            it('can not package unfinished craft', async function(){
+                await catchRevert(this.contract.packageCraft(craftHash1, {from: craftsman2}));
+            });
+
+            beforeEach(async function() {
+                await this.contract.produceCraft(craftHash1, {from: craftsman1});
+                let updateTx = await this.contract.packageCraft(craftHash1, {from: craftsman1});
+                //console.log(updateTx.receipt);
+                // gas used: 30174 (11.01.2019: $0.008)
+            });
+
+            it('can package a craft', async function() {
+                // can call packageCraft function
+                // can assign craft state packaged
+                let craftState = await this.contract.getCraftState(craftHash1);
+                assert.equal(craftState, 2);
+            });
+
+            it('can not package craft if not the producer', async function(){
+                await catchRevert(this.contract.packageCraft(craftHash1, {from: craftsman2}));
+            });
+
+        });
+        
+        describe('can create batches', function() {
+            
+            let batchTime = 1547217700436;
+            let batchHash;
+    
+            beforeEach(async function() {
+                let createTx = await this.contract.createBatch('Scarfs', '10 Pashminas', 'Nadash', 'Nepal', batchTime, {from: craftsman1});
+                //console.log(createTx.receipt); // gas used: 220962 (11.01.2019: $0.06)
+                batchHash = await this.contract.createIdHash('Scarfs', '10 Pashminas', 'Nadash', 'Nepal', batchTime);
+            });
+
+            // correct hash values are created, converted to strings to avoid BigNumber issues
+            it('can generate the right batch hash', async function() {
+                const testHash = '35603547213084079784376295071518091607149606037971267567430881822868138547231';
+                assert.equal(batchHash, testHash, 'Hashes generated from coordinates should be equal.');
+            });
+        
+            let batchInfo;
+
+            describe('can retrieve & update batches', function(){
+
+                beforeEach(async function() {
+                    batchInfo = await this.contract.getBatchInfo(batchHash);
+                });
+
+                it('can retrieve correct batch state', async function() {
+                    let batchState = await this.contract.getBatchState(batchHash);
+                    assert.equal(batchState, 3);
+                });
+        
+                // instantiation of new craft works, by getting raw material for craft
+                it('can get batch info', async function() {
+                    let converted = (batchInfo.batch_time).toString();
+                    batchInfo.batch_time = converted;
+                    batchInfo[5] = converted;
+        
+                    assert.deepEqual(
+                        batchInfo,
+                        {
+                            '0': 'Scarfs',
+                            '1': '10 Pashminas',
+                            '2': 'Nadash',
+                            '3':  craftsman1,
+                            '4': 'Nepal',
+                            '5': batchTime.toString(),
+                            description: '10 Pashminas',
+                            name: 'Scarfs',
+                            producer: 'Nadash',
+                            producer_id:  craftsman1,
+                            batch_loc: 'Nepal',
+                            batch_time: batchTime.toString()
+                        }
+                    )
+                });
+    
+            });
+    
+            it('can add crafts to batch', async function() {
+                // can assign crafts to a specific batch
+                // crafts in batch get batched attribute set to true
+                // batch array & craft batched id are updated properly
+                let craftsToAdd = [craftHash1, craftHash2];
+                let addToBatchTx = await this.contract.addCraftsToBatch(batchHash, craftsToAdd, {from:craftsman1});
+                //console.log(addToBatchTx.receipt); // gas used: 169088 (11.01.2019: $0.046)
+            });
+    
+            it('can put batch up for sale', async function() {
+                // can add batch to for sale map
+                // set price for batch
+                let batchPrice = web3.utils.toWei('1.0', 'ether');
+                assert.equal(await this.contract.ownerOf(batchHash), craftsman1);
+                await this.contract.putBatchForSale(batchHash, batchPrice, {from:craftsman1});
+                assert.equal(await this.contract.getBatchPrice(batchHash), batchPrice);
+                let batchState = await this.contract.getBatchState(batchHash);
+                assert.equal(batchState, 4);
+            });
+    
         });
     });
 
-    describe('can create batches', function() {
-
-        it('can create a batch item', async function() {
-            // can instantiate a new batch
-            // batch has it's on number
-            // batch has producer name
-            // batch owner has producer address
-            // batch has batch_time (creation time)
-        });
-
-        it('can add crafts to batch', async function() {
-            // can assign crafts to a specific batch
-            // crafts in batch get batched attribute set to true
-            // batch map & craft batched id are updated properly
-        });
-
-        it('can put batch up for sale', async function() {
-            // can add batch to for sale map
-            // set forSale attrb. of batch to true
-            // set price for batch
-        });
-
-    });
 
 
     // Aggregator
     describe('can handle batches', function() {
+        let aggregator = accounts[2];
+        let batchTime = 1547217700436;
+        let batchHash;
+        let batchPrice = web3.utils.toWei('1.0', 'ether');
 
-        it('can buy batch', async function() {
-            // if balance is sufficient, can buy batch
-            // batch is taken out of forSale map
-            // batch attrb. forSale is set to false
-            // owner address is changed
+
+        beforeEach(async function() {
+
+            // make batch
+            await this.contract.createBatch('Scarfs', '10 Pashminas', 'Nadash', 'Nepal', batchTime, {from: craftsman1});
+            batchHash = await this.contract.createIdHash('Scarfs', '10 Pashminas', 'Nadash', 'Nepal', batchTime);
+
+            // add crafts to batch
+            let craftsToAdd = [craftHash1, craftHash2];
+            let addToBatchTx = await this.contract.addCraftsToBatch(batchHash, craftsToAdd, {from:craftsman1});
+
+            // put batch up for sale
+            await this.contract.putBatchForSale(batchHash, batchPrice, {from:craftsman1});
+
+        });
+        
+        describe('aggregator can buy batch', function() {
+            
+            beforeEach(async function(){
+                await this.contract.buyBatch(batchHash, {from: aggregator, value: batchPrice, gasPrice: 0})
+            });
+
+            it('aggregator is owner after he bought the batch', async function() {
+                // owner address is changed
+                assert.equal(await this.contract.ownerOf(batchHash), aggregator);
+            });
+    
+            it('batch is taken out of forSale map', async function(){
+               assert.equal(await this.contract.getBatchPrice(batchHash), 0);
+            });
+
+            it('batch state is set to sold', async function(){
+                let batchState = await this.contract.getBatchState(batchHash);
+                assert.equal(batchState, 5);
+             });
         });
 
-        it('can pick up batches from craftsmen', async function() {
-            // can set batch status to pickedUp
-            // can set batch status to sold
+        describe('aggregator balance is changed correctly', function() {
+
+            it('overpaid amount is transferred back ', async function () { 
+                let overpaidAmount = web3.utils.toWei('1.05', 'ether')
+                const balanceBeforeTransaction = await web3.eth.getBalance(aggregator)
+                await this.contract.buyBatch(batchHash, {from: aggregator, value: overpaidAmount, gasPrice: 0})
+                const balanceAfterTransaction = await web3.eth.getBalance(aggregator)
+                assert.equal(balanceBeforeTransaction-balanceAfterTransaction, batchPrice)
+              });
         });
+
+        describe('aggregator can pick up batches from craftsmen', function() {
+            
+            beforeEach(async function() {
+                await this.contract.buyBatch(batchHash, {from: aggregator, value: batchPrice, gasPrice: 0})
+            });
+            
+            it('can pick up batches from craftsmen', async function() {
+                await this.contract.pickUpBatch(batchHash, {from:aggregator});
+                assert.equal(await this.contract.ownerOf(batchHash), aggregator);
+                let batchState = await this.contract.getBatchState(batchHash);
+                assert.equal(batchState, 6);
+            });
+
+        });
+
 
         it('can put batch up for sale', async function() {
             // can add batch to for sale map
