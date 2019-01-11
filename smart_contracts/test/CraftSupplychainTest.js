@@ -13,9 +13,48 @@ contract('CraftSupplychain', accounts => {
 
     // Craftsmen
     describe('can produce a craft', function() {
+        let user1 = accounts[1];
+        let user2 = accounts[2];
+        let time1 = 1547203344300;
+        let time2 = 1547203344400;
+        let craftHash1;
 
-        it('can get raw materials', async function() {
+        beforeEach(async function() {
+            await this.contract.buyCraftMaterial('Scarf', 'Beautiful Pashmina Scarf', 'Nadash', 'Nepal', time1, {from: user1});
+            await this.contract.buyCraftMaterial('Wooden Box', 'Beautiful Wooden Box', 'Imar', 'Idonesia', time2, {from: user2});  
+            craftHash1 = await this.contract.createIdHash('Scarf', 'Beautiful Pashmina Scarf', 'Nadash', 'Nepal', time1);
+        });
+
+        it('can generate the right hash', async function() {
+            const testHash = '72362559462853359796339334205359118679826043531050551250546167185280409739434';
+            assert.equal(craftHash1, testHash, 'Hashes generated from coordinates should be equal.');
+          });
+
+        it('can get raw materials & start production', async function() {
+            let craftInfo = await this.contract.getCraftInfo(craftHash1);
+            let converted = (craftInfo.prod_time).toString();
+            craftInfo.prod_time = converted;
+            craftInfo[5] = converted;
+
+            assert.deepEqual(
+                craftInfo,
+                {
+                    '0': 'Scarf',
+                    '1': 'Beautiful Pashmina Scarf',
+                    '2': 'Nadash',
+                    '3':  user1,
+                    '4': 'Nepal',
+                    '5': time1.toString(),
+                    description: 'Beautiful Pashmina Scarf',
+                    name: 'Scarf',
+                    producer: 'Nadash',
+                    producer_id:  user1,
+                    prod_loc: 'Nepal',
+                    prod_time: time1.toString()
+                }
+            )
             // instantiation of new craft works, by getting raw material for craft
+            //await this.contract.buyCraftMaterial('Scarf', 'Beautiful Pashmina Scarf', 'Nadash', 'Nepal', time, {from: user1});
         });
 
         it('can start production process', async function() {
