@@ -1,9 +1,14 @@
 pragma solidity >=0.5.0;
 
-contract CraftSupplychain  {
+import "../roles/CraftsmanRole.sol";
+import "../roles/AggregatorRole.sol";
+import "../roles/RetailerRole.sol";
+import "../roles/ConsumerRole.sol";
+
+contract CraftSupplychain is CraftsmanRole, AggregatorRole, RetailerRole, ConsumerRole {
 
   // contract owner
-  address owner;
+  address private contractOwner;
 
   // Define a variable called 'upc' for Universal Product Code (UPC)
   uint  upc;
@@ -89,7 +94,7 @@ contract CraftSupplychain  {
 
   // Define a modifer that checks to see if msg.sender == owner of the contract
   modifier onlyOwner() {
-    require(msg.sender == owner, "Only the contract owner can use this functionality.");
+    require(msg.sender == contractOwner, "Only the contract owner can use this functionality.");
     _;
   }
 
@@ -231,13 +236,13 @@ contract CraftSupplychain  {
   // and set 'sku' to 1
   // and set 'upc' to 1
   constructor() public payable {
-    owner = msg.sender;
+    contractOwner = msg.sender;
     upc = 1;
   }
 
   // Define a function 'kill' if required
   function kill() public {
-    if (msg.sender == owner) {
+    if (msg.sender == contractOwner) {
       selfdestruct(msg.sender);
     }
   }
@@ -441,7 +446,7 @@ contract CraftSupplychain  {
     require(batch.destination == msg.sender, "Only the batch recipient can receive a batch.");
     batch.state = State.received;
   }
-
+   /*
   function unBatch(uint _bach_no) public {
 
   }
@@ -461,5 +466,5 @@ contract CraftSupplychain  {
   function receiveCraft(uint _upc) public {
     
   }
-
+  */
 }

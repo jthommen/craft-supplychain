@@ -1,15 +1,16 @@
 // Migrating the appropriate contracts
 
-// var CraftsmanRole = artifacts.require("./roles/CraftsmanRole.sol");
-// var AggregatorRole = artifacts.require("./roles/AggregatorRole.sol");
-// var RetailerRole = artifacts.require("./roles/RetailerRole.sol");
-// var ConsumerRole = artifacts.require("./roles/ConsumerRole.sol");
-var SupplyChain = artifacts.require("./craftbase/CraftSupplychain.sol");
+var CraftsmanRole = artifacts.require("CraftsmanRole");
+var AggregatorRole = artifacts.require("AggregatorRole");
+var RetailerRole = artifacts.require("RetailerRole");
+var ConsumerRole = artifacts.require("ConsumerRole");
+var SupplyChain = artifacts.require("CraftSupplychain");
+
 
 module.exports = function(deployer) {
-  // deployer.deploy(CraftsmanRole);
-  // deployer.deploy(AggregatorRole);
-  // deployer.deploy(RetailerRole);
-  // deployer.deploy(ConsumerRole);
+  deployer.deploy(CraftsmanRole);
+  deployer.deploy(AggregatorRole);
+  deployer.deploy(RetailerRole);
+  deployer.deploy(ConsumerRole);
   deployer.deploy(SupplyChain);
 };
