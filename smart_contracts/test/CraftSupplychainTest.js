@@ -195,7 +195,7 @@ contract('CraftSupplychain', accounts => {
                 // can add batch to for sale map
                 // set price for batch
                 let batchPrice = web3.utils.toWei('1.0', 'ether');
-                assert.equal(await this.contract.ownerOf(batchHash), craftsman1);
+                assert.equal(await this.contract.getBatchOwner(batchHash), craftsman1);
                 await this.contract.putBatchForSale(batchHash, batchPrice, {from:craftsman1});
                 assert.equal(await this.contract.getBatchPrice(batchHash), batchPrice);
                 let batchState = await this.contract.getBatchState(batchHash);
@@ -235,7 +235,7 @@ contract('CraftSupplychain', accounts => {
 
             it('aggregator is owner after he bought the batch', async function() {
                 // owner address is changed
-                assert.equal(await this.contract.ownerOf(batchHash), aggregator);
+                assert.equal(await this.contract.getBatchOwner(batchHash), aggregator);
             });
     
             it('batch is taken out of forSale map', async function(){
@@ -267,7 +267,7 @@ contract('CraftSupplychain', accounts => {
             });
             
             it('can pick up batches from craftsmen', async function() {
-                assert.equal(await this.contract.ownerOf(batchHash), aggregator);
+                assert.equal(await this.contract.getBatchOwner(batchHash), aggregator);
                 let batchState = await this.contract.getBatchState(batchHash);
                 assert.equal(batchState, 6);
             });
@@ -287,7 +287,7 @@ contract('CraftSupplychain', accounts => {
                 // can add batch to for sale map
                 // set forSale attrb. of batch to true
                 // set price for batch
-                assert.equal(await this.contract.ownerOf(batchHash), aggregator);
+                assert.equal(await this.contract.getBatchOwner(batchHash), aggregator);
                 assert.equal(await this.contract.getBatchPrice(batchHash), batchPrice);
                 let batchState = await this.contract.getBatchState(batchHash);
                 assert.equal(batchState, 4);
@@ -340,7 +340,7 @@ contract('CraftSupplychain', accounts => {
 
         it('retailer is owner after he bought the batch', async function() {
             // owner address is changed
-            assert.equal(await this.contract.ownerOf(batchHash), retailer);
+            assert.equal(await this.contract.getBatchOwner(batchHash), retailer);
         });
 
         it('batch is taken out of forSale map', async function(){

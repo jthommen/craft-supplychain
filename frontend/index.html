@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Craft Supplychain</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+
+  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Craft Supplychain</h1>
+
+    <div class="row">
+      <h2>Claim a star</h2>
+      <label class="bold">Star Name:</label>
+      <input type="text" id="star-name">
+    </div>
+
+    <div class="row">
+      <label class="bold">Star Story:</label>
+      <input type="text" id="star-story">
+    </div>
+
+    <div class="row">
+      <h3>Star coordinates:</h3>
+    </div>
+    <div class="row">
+      <label class="bold">ra:</label>
+      <input type="text" id="star-ra">
+    </div>
+    <div class="row">
+      <label class="bold">dec:</label>
+      <input type="text" id="star-dec">
+    </div>
+    <div class="row">
+      <label class="bold">mag:</label>
+      <input type="text" id="star-mag">
+    </div>
+    <button id="claim-button" onclick="claimButtonClicked()">Claim Star</button>
+
+    <hr>
+
+    <h2>Get a star id</h2>
+    <div class="row">
+      <label class="bold">ra:</label>
+      <input type="text" id="star-id-ra">
+    </div>
+    <div class="row">
+      <label class="bold">dec:</label>
+      <input type="text" id="star-id-dec">
+    </div>
+    <div class="row">
+      <label class="bold">mag:</label>
+      <input type="text" id="star-id-mag">
+    </div>
+    <button id="id-button" onclick="idButtonClicked()">Get Star ID</button>
+    <div id="star-hash"></div>
+
+    <hr>
+
+    <div class="row">
+      <h2>Retrieve a star by id</h2>
+      <label class="bold">star id (hex):</label>
+      <input id="star-id">
+    </div>
+    <button id="get-button" onclick="getButtonClicked()">Get Star Info</button>
+    <ul id="star-info"></ul>
+
+
+  </div>
+
+  <script type="application/javascript" charset="utf-8" src="app.js"></script>
+
+</body>
+
+</html>

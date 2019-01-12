@@ -1,6 +1,8 @@
 node_modules
 build
-deployment.txt
+.secret
+.infura_id
 truffle.js
 .DS_Store
 .vscode
+deployment.txt
