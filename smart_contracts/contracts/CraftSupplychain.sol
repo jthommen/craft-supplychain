@@ -2,7 +2,6 @@ pragma solidity ^0.5.0;
 
 import "../node_modules/openzeppelin-solidity/contracts/token/ERC721/ERC721.sol";
 
-
 contract CraftSupplychain is ERC721 {
 
   // States a Craft can be in, changes as it proceeds through the supplychain
@@ -15,8 +14,7 @@ contract CraftSupplychain is ERC721 {
     sold, // 5
     pickedUp, // 6
     shipped, // 7
-    received, // 8
-    purchased // 9
+    received // 8
   }
 
   // Basic object of the craft supply chain
@@ -45,12 +43,16 @@ contract CraftSupplychain is ERC721 {
     uint256[] crafts;
     uint256 craft_count;
     States state;
+    address destination;
   }
 
-  // Holds a mapping of all crafts on the DLT
-  mapping(uint256 => Craft) craftRegistry;
+  // Data structures for information access
+  mapping(uint256 => Craft) craftRegistry; 
   mapping(uint256 => Batch) batchRegistry;
   mapping(uint256 => uint256) batchesForSaleMap;
+  mapping(address => uint256[]) craftsByCraftsman;
+  mapping(address => uint256[]) batchesByCraftsman;
+  mapping(address => uint256[]) batchesByIntermediary;
 
   // Starts the production process by buying raw material
   function buyCraftMaterial(
@@ -72,6 +74,7 @@ contract CraftSupplychain is ERC721 {
       false, 0,
       States.productionStarted);
     craftRegistry[_craftId] = newCraft;
+    craftsByCraftsman[msg.sender].push(_craftId);
     _mint(msg.sender, _craftId);
   }
 
@@ -143,9 +146,11 @@ contract CraftSupplychain is ERC721 {
       _batch_loc,
       _batch_time,
       new uint256[](0), 0,
-      States.batched
+      States.batched,
+      msg.sender
     );
     batchRegistry[_batchId] = newBatch;
+    batchesByCraftsman[msg.sender].push(_batchId);
     _mint(msg.sender, _batchId);
   }
 
@@ -213,6 +218,7 @@ contract CraftSupplychain is ERC721 {
     batchesForSaleMap[_batchId] = 0;
     Batch storage batch = batchRegistry[_batchId];
     batch.state = States.sold;
+    batchesByIntermediary[msg.sender].push(_batchId);
 
     // return over pay
     if(msg.value > batchCost) { 
@@ -221,30 +227,24 @@ contract CraftSupplychain is ERC721 {
   }
 
   function pickUpBatch(uint256 _batchId) public {
-    require(this.ownerOf(_batchId) == msg.sender, "Only owner can pick up batch from producer.");
+    require(this.ownerOf(_batchId) == msg.sender, "Only the owner can pick up batch from producer.");
     Batch storage batch = batchRegistry[_batchId];
     batch.state = States.pickedUp;
   }
 
 
-  function shipBatch() public {
-
+  function shipBatch(uint256 _batchId, address _dest) public {
+    Batch storage batch = batchRegistry[_batchId];
+    require(this.ownerOf(_batchId) == _dest, "Can only send batch to it's owner.");
+    batch.destination = _dest;
+    batch.state = States.shipped;
   }
 
-  function receiveBatch() public {
-
-  }
-
-  function shipCraft() public {
-
-  }
-
-  function purchaseCraft() public {
-
-  }
-
-  function receiveCraft() public {
-
+  function receiveBatch(uint256 _batchId) public {
+    Batch storage batch = batchRegistry[_batchId];
+    require(batch.state == States.shipped, "Can only received shipped batches.");
+    require(batch.destination == msg.sender, "Only the batch recipient can receive a batch.");
+    batch.state = States.received;
   }
 
 }
