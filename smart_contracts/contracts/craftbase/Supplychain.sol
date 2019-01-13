@@ -234,19 +234,15 @@ contract Supplychain is Ownable, CraftsmanRole, AggregatorRole, RetailerRole, Co
     Batch.Data storage batch = batchRegistry.Data[_batch_no];
     uint i;
     for(i = 0; i<_crafts.length; i++) {
-      Craft.Data storage craft = craftRegistry.Data[_crafts[i]];
-      require(craft.producer_id == msg.sender, "Can only add crafts made by batch producer to batch.");
+      craftRegistry.batch(_crafts[i], _batch_no);
       batch.crafts.push(_crafts[i]);
-      craft.batch = _batch_no;
-      craft.state = Craft.State.batched;
     }
     batch.craft_count += i;
   }
  
   function putBatchForSale(uint _batch_no, uint _price) public batchOwnerOf(_batch_no) {
     batchesForSaleMap[_batch_no] = _price;
-    Batch.Data storage batch = batchRegistry.Data[_batch_no];
-    batch.state = Batch.State.forSale;
+    batchRegistry.stateForSale(_batch_no);
   }
 
   function getBatchPrice(uint _batch_no) public view returns(uint price) {
@@ -267,7 +263,7 @@ contract Supplychain is Ownable, CraftsmanRole, AggregatorRole, RetailerRole, Co
 
     // Update ownership
     batch.owner = msg.sender;
-    batch.state = Batch.State.sold;
+    batchRegistry.stateSold(_batch_no);
 
     // return over pay
     if(msg.value > batchCost) { 
@@ -291,16 +287,13 @@ contract Supplychain is Ownable, CraftsmanRole, AggregatorRole, RetailerRole, Co
   function unBatch(uint _batch_no) public onlyRetailer() batchOwnerOf(_batch_no) checkBatchLocation(_batch_no) {
     Batch.Data memory batch = batchRegistry.Data[_batch_no];
     for(uint i=0; i<batch.crafts.length; i++) {
-      Craft.Data storage craft = craftRegistry.Data[batch.crafts[i]];
-      craft.batched = false;
-      craft.owner = msg.sender;
+      craftRegistry.unBatch(batch.crafts[i]);
     }
   }
   
   function putCraftForSale(uint _upc, uint _price) public onlyRetailer() craftOwnerOf(_upc) checkUnbatched(_upc) {
     craftsForSaleMap[_upc] = _price;
-    Craft.Data storage craft = craftRegistry.Data[_upc];
-    craft.state = Craft.State.forSale;
+    craftRegistry.stateForSale(_upc);
   }
 
   function buyCraft(uint _upc) public payable onlyConsumer() craftForSale(_upc) {
@@ -313,7 +306,7 @@ contract Supplychain is Ownable, CraftsmanRole, AggregatorRole, RetailerRole, Co
     oldOwner.transfer(craftCost);
 
     craft.owner = msg.sender;
-    craft.state = Craft.State.sold;
+    craftRegistry.stateSold(_upc);
 
     // return over pay
     if(msg.value > craftCost) { 

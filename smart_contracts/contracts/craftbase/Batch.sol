@@ -44,7 +44,7 @@ library Batch {
   event Batched(uint upc);
   event ForSale(uint upc);
   event Sold(uint upc);
-  event pickedUp(uint upc);
+  event PickedUp(uint upc);
   event Shipped(uint upc);
   event Received(uint upc);
   event Unbatched(uint upc);
@@ -125,13 +125,28 @@ library Batch {
     function statePickedUp(Registry storage self, uint _batch_no) public {
     Batch.Data storage batch = self.Data[_batch_no];
     batch.state = Batch.State.pickedUp;
+    emit PickedUp(_batch_no);
   }
+
+  function stateForSale(Registry storage self, uint _batch_no) public {
+    Batch.Data storage batch = self.Data[_batch_no];
+    batch.state = Batch.State.forSale;
+    emit ForSale(_batch_no);
+  }
+
+  function stateSold(Registry storage self, uint _batch_no) public {
+    Batch.Data storage batch = self.Data[_batch_no];
+    batch.state = Batch.State.sold;
+    emit Sold(_batch_no);
+  }
+
 
   function stateShipped(Registry storage self, uint _batch_no, address _dest) public {
     Batch.Data storage batch = self.Data[_batch_no];
     require(self.Data[_batch_no].owner == _dest, "Can only send batch to it's owner.");
     batch.destination = _dest;
     batch.state = Batch.State.shipped;
+    emit Shipped(_batch_no);
   }
 
   function stateReceived(Registry storage self, uint _batch_no) public {
@@ -139,7 +154,9 @@ library Batch {
     require(batch.state == Batch.State.shipped, "Can only received shipped batches.");
     require(batch.destination == msg.sender, "Only the batch recipient can receive a batch.");
     batch.state = Batch.State.received;
+    emit Received(_batch_no);
   }
+
 
 
 }

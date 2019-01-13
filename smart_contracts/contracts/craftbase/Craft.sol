@@ -46,6 +46,7 @@ library Craft {
   event Batched(uint upc);
   event ForSale(uint upc);
   event Sold(uint upc);
+  event UnBatched(uint upc);
   event Shipped(uint upc);
   event Received(uint upc);
 
@@ -83,6 +84,7 @@ library Craft {
       Craft.State.productionStarted,
       msg.sender);
     self.Data[upc] = newCraft;
+    emit ProductionStarted(upc);
   }
 
   // Retrieves the craft information
@@ -121,21 +123,53 @@ library Craft {
   function stateProductionFinished(Registry storage self, uint _upc) public {
     Craft.Data storage craft = self.Data[_upc];
     craft.state = Craft.State.productionFinished;
+    emit ProductionFinished(_upc);
   }
 
   function statePackaged(Registry storage self, uint _upc) public {
     Craft.Data storage craft = self.Data[_upc];
     craft.state = Craft.State.packaged;
+    emit Packaged(_upc);
+  }
+
+  function stateForSale(Registry storage self, uint _upc) public {
+    Craft.Data storage craft = self.Data[_upc];
+    craft.state = Craft.State.forSale;
+    emit ForSale(_upc);
+  }
+
+  function stateSold(Registry storage self, uint _upc) public {
+    Craft.Data storage craft = self.Data[_upc];
+    craft.state = Craft.State.sold;
+    emit Sold(_upc);
   }
 
   function stateShipped(Registry storage self, uint _upc) public {
     Craft.Data storage craft = self.Data[_upc];
     craft.state = Craft.State.shipped;
+    emit Shipped(_upc);
   }
 
   function stateReceived(Registry storage self, uint _upc) public {
     Craft.Data storage craft = self.Data[_upc];
     craft.state = Craft.State.received;
+    emit Received(_upc);
+  }
+
+  // Batching
+  function batch(Registry storage self, uint _upc, uint _batch_no) public {
+    Craft.Data storage craft = self.Data[_upc];
+    require(craft.producer_id == msg.sender, "Can only add crafts made by batch producer to batch.");
+    craft.batch = _batch_no;
+    craft.state = Craft.State.batched;
+    emit Batched(_upc);
+  }
+
+  function unBatch(Registry storage self, uint _upc) public {
+    Craft.Data storage craft = self.Data[_upc];
+    craft.batched = false;
+    craft.owner = msg.sender;
+    emit UnBatched(_upc);
   }
 
 }
