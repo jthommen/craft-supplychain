@@ -5,6 +5,11 @@ library Batch {
   // Member function only count for topmost struct
   struct Registry { mapping(uint => Batch.Data) Data; }
 
+  struct Loc {
+    string lat;
+    string lng;
+  }
+
   // Aggregated crafts of same kind into batches
   struct Data {
     uint batch_no;
@@ -12,7 +17,7 @@ library Batch {
     string description;
     string producer;
     address producer_id;
-    string batch_loc;
+    Loc loc;
     uint batch_time;
     uint[] crafts;
     uint craft_count;
@@ -44,15 +49,14 @@ library Batch {
   event Received(uint upc);
   event Unbatched(uint upc);
 
-  // Creates a unique hash out of craft informations
+  // Creates a unique hash out of batch informations
   function _createIdHash(
     string memory _name,
     string memory _description,
     string memory _producer,
-    string memory _prod_loc,
     uint _prod_time
     ) public pure returns(uint) {
-    bytes32 _bytes32Hash = keccak256(abi.encodePacked(_name, _description, _producer,  _prod_loc, _prod_time));
+    bytes32 _bytes32Hash = keccak256(abi.encodePacked(_name, _description, _producer, _prod_time));
     return uint(_bytes32Hash);
   }
 
@@ -61,17 +65,18 @@ library Batch {
     string memory _name,
     string memory _description,
     string memory _producer,
-    string memory _batch_loc,
+    string memory _batch_lat,
+    string memory _batch_lng,
     uint _batch_time
   ) public {
-    uint _batch_no = _createIdHash(_name, _description, _producer, _batch_loc, _batch_time);
+    uint batch_no = _createIdHash(_name, _description, _producer, _batch_time);
     Batch.Data memory newBatch = Batch.Data(
-      _batch_no,
+      batch_no,
       _name,
       _description,
       _producer,
       msg.sender,
-      _batch_loc,
+      Loc(_batch_lat, _batch_lng),
       _batch_time,
       new uint[](0), 0,
       Batch.State.batched,
@@ -81,7 +86,7 @@ library Batch {
       address(0),
       address(0)
     );
-    self.Data[_batch_no] = newBatch;
+    self.Data[batch_no] = newBatch;
   }
 
   // Retrieves the batch information
@@ -90,16 +95,18 @@ library Batch {
     string memory description, 
     string memory producer,
     address producer_id,
-    string memory batch_loc,
+    string memory batch_lat,
+    string memory batch_lng,
     uint batch_time) {
     Batch.Data memory batch = self.Data[batchId];
     name = batch.name;
     description = batch.description;
     producer = batch.producer;
     producer_id = batch.producer_id;
-    batch_loc = batch.batch_loc;
+    batch_lat = batch.loc.lat;
+    batch_lng = batch.loc.lng;
     batch_time = batch.batch_time;
-    return (name, description, producer, producer_id, batch_loc, batch_time);
+    return (name, description, producer, producer_id, batch_lat, batch_lng, batch_time);
   }
 
   // Retrieves batch owner

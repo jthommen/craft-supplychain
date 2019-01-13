@@ -6,8 +6,9 @@ import "../roles/RetailerRole.sol";
 import "../roles/ConsumerRole.sol";
 import "./Craft.sol";
 import "./Batch.sol";
+import "../craftcore/Ownable.sol";
 
-contract Supplychain is CraftsmanRole, AggregatorRole, RetailerRole, ConsumerRole {
+contract Supplychain is Ownable, CraftsmanRole, AggregatorRole, RetailerRole, ConsumerRole {
 
   using Craft for Craft.Data;
   using Craft for Craft.State;
@@ -150,10 +151,21 @@ contract Supplychain is CraftsmanRole, AggregatorRole, RetailerRole, ConsumerRol
     string memory _name,
     string memory _description,
     string memory _producer,
-    string memory _prod_loc,
+    string memory _prod_lat,
+    string memory _prod_lng,
     uint _prod_time
-    ) public {
-      craftRegistry.startNewCraft(_name, _description, _producer, _prod_loc, _prod_time);
+    ) public onlyCraftsman() {
+      craftRegistry.startNewCraft(_name, _description, _producer, _prod_lat, _prod_lng, _prod_time);
+  }
+
+  function getHash(
+    string memory _name,
+    string memory _description,
+    string memory _producer,
+    uint _prod_time
+  ) public pure returns(uint) {
+    bytes32 _bytes32Hash = keccak256(abi.encodePacked(_name, _description, _producer, _prod_time));
+    return uint(_bytes32Hash);
   }
 
   // Retrieves the craft information
@@ -162,7 +174,8 @@ contract Supplychain is CraftsmanRole, AggregatorRole, RetailerRole, ConsumerRol
     string memory description, 
     string memory producer,
     address producer_id,
-    string memory prod_loc,
+    string memory prod_lat,
+    string memory prod_lng,
     uint prod_time) {
     return craftRegistry.getInfo(_upc);
   }
@@ -176,11 +189,11 @@ contract Supplychain is CraftsmanRole, AggregatorRole, RetailerRole, ConsumerRol
     return craftRegistry.getState(_upc);
   }
 
-  function produceCraft(uint _upc) public checkCraftProducer(_upc) productionStarted(_upc){
+  function produceCraft(uint _upc) public onlyCraftsman() checkCraftProducer(_upc) productionStarted(_upc){
     craftRegistry.stateProductionFinished(_upc);
   }
 
-  function packageCraft(uint _upc) public checkCraftProducer(_upc) productionFinished(_upc){
+  function packageCraft(uint _upc) public onlyCraftsman() checkCraftProducer(_upc) productionFinished(_upc){
     craftRegistry.statePackaged(_upc);
   }
 
@@ -188,10 +201,11 @@ contract Supplychain is CraftsmanRole, AggregatorRole, RetailerRole, ConsumerRol
     string memory _name,
     string memory _description,
     string memory _producer,
-    string memory _batch_loc,
+    string memory _batch_lat,
+    string memory _batch_lng,
     uint _batch_time
-  ) public {
-    batchRegistry.makeNewBatch(_name, _description, _producer, _batch_loc, _batch_time);
+  ) public onlyCraftsman(){
+    batchRegistry.makeNewBatch(_name, _description, _producer, _batch_lat, _batch_lng, _batch_time);
   }
 
   // Retrieves the batch information
@@ -200,7 +214,8 @@ contract Supplychain is CraftsmanRole, AggregatorRole, RetailerRole, ConsumerRol
     string memory description, 
     string memory producer,
     address producer_id,
-    string memory batch_loc,
+    string memory batch_lat,
+    string memory batch_lng,
     uint batch_time) {
     return batchRegistry.getInfo(_batch_no);
   }
@@ -215,7 +230,7 @@ contract Supplychain is CraftsmanRole, AggregatorRole, RetailerRole, ConsumerRol
     return batchRegistry.getOwner(_batch_no);
   }
 
-  function addCraftsToBatch(uint _batch_no, uint[] memory _crafts) public checkBatchProducer(_batch_no) {
+  function addCraftsToBatch(uint _batch_no, uint[] memory _crafts) public onlyCraftsman() checkBatchProducer(_batch_no) {
     Batch.Data storage batch = batchRegistry.Data[_batch_no];
     uint i;
     for(i = 0; i<_crafts.length; i++) {
@@ -238,7 +253,7 @@ contract Supplychain is CraftsmanRole, AggregatorRole, RetailerRole, ConsumerRol
     return batchesForSaleMap[_batch_no];
   }
 
-  function buyBatch(uint _batch_no) public payable  batchForSale(_batch_no){
+  function buyBatch(uint _batch_no) public payable batchForSale(_batch_no){
     uint batchCost = batchesForSaleMap[_batch_no];
     require(msg.value >= batchCost, "Not enough money available to buy the batch.");
     
@@ -260,7 +275,7 @@ contract Supplychain is CraftsmanRole, AggregatorRole, RetailerRole, ConsumerRol
     }
   }
 
-  function pickUpBatch(uint _batch_no) public batchOwnerOf(_batch_no) {
+  function pickUpBatch(uint _batch_no) public onlyAggregator() batchOwnerOf(_batch_no) {
     batchRegistry.statePickedUp(_batch_no);
   }
 
@@ -268,12 +283,12 @@ contract Supplychain is CraftsmanRole, AggregatorRole, RetailerRole, ConsumerRol
     batchRegistry.stateShipped(_batch_no, _dest);
   }
 
-  function receiveBatch(uint _batch_no) public batchShipped(_batch_no){
+  function receiveBatch(uint _batch_no) public onlyRetailer() batchShipped(_batch_no){
     batchRegistry.stateReceived(_batch_no);
   }
   
   
-  function unBatch(uint _batch_no) public batchOwnerOf(_batch_no) checkBatchLocation(_batch_no) {
+  function unBatch(uint _batch_no) public onlyRetailer() batchOwnerOf(_batch_no) checkBatchLocation(_batch_no) {
     Batch.Data memory batch = batchRegistry.Data[_batch_no];
     for(uint i=0; i<batch.crafts.length; i++) {
       Craft.Data storage craft = craftRegistry.Data[batch.crafts[i]];
@@ -282,13 +297,13 @@ contract Supplychain is CraftsmanRole, AggregatorRole, RetailerRole, ConsumerRol
     }
   }
   
-  function putCraftForSale(uint _upc, uint _price) public craftOwnerOf(_upc) checkUnbatched(_upc) {
+  function putCraftForSale(uint _upc, uint _price) public onlyRetailer() craftOwnerOf(_upc) checkUnbatched(_upc) {
     craftsForSaleMap[_upc] = _price;
     Craft.Data storage craft = craftRegistry.Data[_upc];
     craft.state = Craft.State.forSale;
   }
 
-  function buyCraft(uint _upc) public payable craftForSale(_upc) {
+  function buyCraft(uint _upc) public payable onlyConsumer() craftForSale(_upc) {
     uint craftCost = craftsForSaleMap[_upc];
     require(msg.value >= craftCost, "Not enough money available to buy the craft.");
 
@@ -307,11 +322,11 @@ contract Supplychain is CraftsmanRole, AggregatorRole, RetailerRole, ConsumerRol
 
   }
 
-  function shipCraft(uint _upc) public craftSold(_upc) {
+  function shipCraft(uint _upc) public onlyRetailer() craftSold(_upc) {
     craftRegistry.stateShipped(_upc);
   }
 
-  function receiveCraft(uint _upc) public craftShipped(_upc){
+  function receiveCraft(uint _upc) public onlyConsumer() craftShipped(_upc){
     craftRegistry.stateReceived(_upc);
   }
 

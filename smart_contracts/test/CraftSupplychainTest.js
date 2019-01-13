@@ -15,19 +15,25 @@ contract('Supplychain', accounts => {
     let time1 = 1547203344300;
     let time2 = 1547203344400;
     let batchTime = 1547217700436;
-    let craftHash1 = '72362559462853359796339334205359118679826043531050551250546167185280409739434';
-    let craftHash2 = '102967879904428869019257983059994937678724776507364188674401776511150013439199';
-    let batchHash = '35603547213084079784376295071518091607149606037971267567430881822868138547231';
-
+    let craftHash1 = '46757543844082306353081225499869141453631652546996012760947200050485532950115';
+    let craftHash2 = '36580957012417366262508478063966664319855081564002569778309017434131730997965';
+    let batchHash = '81257438182653602719049810730241408647975968798184685282804374355538191972097';
+    
     beforeEach(async function() {
         // Instantiate a new, fresh contract instance for every test
         this.contract = await CraftSupplychain.new({from: defaultAccount});
 
-        // Set up some basic crafts for all tests
-        let createTx = await this.contract.buyCraftMaterial('Scarf', 'Beautiful Pashmina Scarf', 'Nadash', 'Nepal', time1, {from: craftsman1});
-        // gas used: 262624 (11.01.2019: $0.072)
-        await this.contract.buyCraftMaterial('Wooden Box', 'Beautiful Wooden Box', 'Nadash', 'Nepal', time2, {from: craftsman1});  
+        // Set roles for actors
+        await this.contract.addCraftsman(craftsman1);
+        await this.contract.addCraftsman(craftsman2);
+        await this.contract.addAggregator(aggregator);
+        await this.contract.addRetailer(retailer);
+        await this.contract.addConsumer(consumer);
         
+        // Set up some basic crafts for all tests
+        await this.contract.buyCraftMaterial('Scarf', 'Beautiful Pashmina Scarf', 'Nadash', '28.135699', '85.638029', time1, {from: craftsman1});
+        await this.contract.buyCraftMaterial('Wooden Box', 'Beautiful Wooden Box', 'Nadash', '28.135699', '85.638029', time2, {from: craftsman1});  
+        // gas used: 262624 (11.01.2019: $0.072)
         
     });
     
@@ -35,36 +41,41 @@ contract('Supplychain', accounts => {
     describe('Craftsman: Can produce a craft', function() {
         
         let craftInfo;
+
         
         describe('can start production', function(){
 
             beforeEach(async function() {
                 craftInfo = await this.contract.getCraftInfo(craftHash1);
             });
+
+            it('gets the right hash value', async function() {
+                let testHash1 = await this.contract.getHash('Scarf', 'Beautiful Pashmina Scarf', 'Nadash', time1);
+                let testHash2 = await this.contract.getHash('Wooden Box', 'Beautiful Wooden Box', 'Nadash', time2);
+                //console.log('testHash1: ', testHash1.toString());
+                //console.log('testHash2: ', testHash2.toString());
+                assert.equal(craftHash1, testHash1.toString());
+                assert.equal(craftHash2, testHash2.toString());
+            });
     
             // instantiation of new craft works, by getting raw material for craft
             it('can get raw materials & start production', async function() {
-                let converted = (craftInfo.prod_time).toString();
-                craftInfo.prod_time = converted;
-                craftInfo[5] = converted;
-    
-                assert.deepEqual(
-                    craftInfo,
-                    {
-                        '0': 'Scarf',
-                        '1': 'Beautiful Pashmina Scarf',
-                        '2': 'Nadash',
-                        '3':  craftsman1,
-                        '4': 'Nepal',
-                        '5': time1.toString(),
-                        description: 'Beautiful Pashmina Scarf',
-                        name: 'Scarf',
-                        producer: 'Nadash',
-                        producer_id:  craftsman1,
-                        prod_loc: 'Nepal',
-                        prod_time: time1.toString()
-                    }
-                )
+                let name = craftInfo.name;
+                let description = craftInfo.description;
+                let producer = craftInfo.producer;
+                let producer_id = craftInfo.producer_id;
+                let prod_lat = craftInfo.prod_lat;
+                let prod_lng = craftInfo.prod_lng;
+                let prod_time = craftInfo.prod_time;
+
+                assert.equal(name, 'Scarf');
+                assert.equal(description, 'Beautiful Pashmina Scarf');
+                assert.equal(producer, 'Nadash');
+                assert.equal(producer_id, craftsman1);
+                assert.equal(prod_lat, '28.135699');
+                assert.equal(prod_lng, '85.638029');
+                assert.equal(prod_time.toString(), time1.toString());
+
             });
 
             it('can start production process', async function() {
@@ -104,8 +115,7 @@ contract('Supplychain', accounts => {
 
             beforeEach(async function() {
                 await this.contract.produceCraft(craftHash1, {from: craftsman1});
-                let updateTx = await this.contract.packageCraft(craftHash1, {from: craftsman1});
-                //console.log(updateTx.receipt);
+                await this.contract.packageCraft(craftHash1, {from: craftsman1});
                 // gas used: 30174 (11.01.2019: $0.008)
             });
 
@@ -125,7 +135,7 @@ contract('Supplychain', accounts => {
         describe('can create batches', function() {
     
             beforeEach(async function() {
-                let createTx = await this.contract.createBatch('Scarfs', '10 Pashminas', 'Nadash', 'Nepal', batchTime, {from: craftsman1});
+                await this.contract.createBatch('Scarfs', '10 Pashminas', 'Nadash', '28.135699', '85.638029', batchTime, {from: craftsman1});
                 //console.log(createTx.receipt); // gas used: 220962 (11.01.2019: $0.06)
             });
         
@@ -137,6 +147,12 @@ contract('Supplychain', accounts => {
                     batchInfo = await this.contract.getBatchInfo(batchHash);
                 });
 
+                it('gets the right hash value', async function() {
+                    let testHash = await this.contract.getHash('Scarfs', '10 Pashminas', 'Nadash', batchTime);
+                    console.log('testHash1: ', testHash.toString());
+                    assert.equal(batchHash, testHash.toString());
+                });
+
                 it('can retrieve correct batch state', async function() {
                     let batchState = await this.contract.getBatchState(batchHash);
                     assert.equal(batchState, 0);
@@ -144,27 +160,21 @@ contract('Supplychain', accounts => {
         
                 // instantiation of new craft works, by getting raw material for craft
                 it('can get batch info', async function() {
-                    let converted = (batchInfo.batch_time).toString();
-                    batchInfo.batch_time = converted;
-                    batchInfo[5] = converted;
-        
-                    assert.deepEqual(
-                        batchInfo,
-                        {
-                            '0': 'Scarfs',
-                            '1': '10 Pashminas',
-                            '2': 'Nadash',
-                            '3':  craftsman1,
-                            '4': 'Nepal',
-                            '5': batchTime.toString(),
-                            description: '10 Pashminas',
-                            name: 'Scarfs',
-                            producer: 'Nadash',
-                            producer_id:  craftsman1,
-                            batch_loc: 'Nepal',
-                            batch_time: batchTime.toString()
-                        }
-                    )
+                    let name = batchInfo.name;
+                    let description = batchInfo.description;
+                    let producer = batchInfo.producer;
+                    let producer_id = batchInfo.producer_id;
+                    let batch_lat = batchInfo.batch_lat;
+                    let batch_lng = batchInfo.batch_lng;
+                    let batch_time = batchInfo.batch_time;
+    
+                    assert.equal(name, 'Scarfs');
+                    assert.equal(description, '10 Pashminas');
+                    assert.equal(producer, 'Nadash');
+                    assert.equal(producer_id, craftsman1);
+                    assert.equal(batch_lat, '28.135699');
+                    assert.equal(batch_lng, '85.638029');
+                    assert.equal(batch_time.toString(), batchTime.toString());
                 });
     
             });
@@ -174,8 +184,8 @@ contract('Supplychain', accounts => {
                 // crafts in batch get batched attribute set to true
                 // batch array & craft batched id are updated properly
                 let craftsToAdd = [craftHash1, craftHash2];
-                let addToBatchTx = await this.contract.addCraftsToBatch(batchHash, craftsToAdd, {from:craftsman1});
-                //console.log(addToBatchTx.receipt); // gas used: 169088 (11.01.2019: $0.046)
+                await this.contract.addCraftsToBatch(batchHash, craftsToAdd, {from:craftsman1});
+                // gas used: 169088 (11.01.2019: $0.046)
             });
     
             it('can put batch up for sale', async function() {
@@ -202,11 +212,11 @@ contract('Supplychain', accounts => {
         beforeEach(async function() {
 
             // make batch
-            await this.contract.createBatch('Scarfs', '10 Pashminas', 'Nadash', 'Nepal', batchTime, {from: craftsman1});
+            await this.contract.createBatch('Scarfs', '10 Pashminas', 'Nadash', '28.135699', '85.638029', batchTime, {from: craftsman1});
 
             // add crafts to batch
             let craftsToAdd = [craftHash1, craftHash2];
-            let addToBatchTx = await this.contract.addCraftsToBatch(batchHash, craftsToAdd, {from:craftsman1});
+            await this.contract.addCraftsToBatch(batchHash, craftsToAdd, {from:craftsman1});
 
             // put batch up for sale
             await this.contract.putBatchForSale(batchHash, batchPrice, {from:craftsman1});
@@ -309,7 +319,7 @@ contract('Supplychain', accounts => {
         beforeEach(async function() {
 
             // make batch
-            await this.contract.createBatch('Scarfs', '10 Pashminas', 'Nadash', 'Nepal', batchTime, {from: craftsman1});
+            await this.contract.createBatch('Scarfs', '10 Pashminas', 'Nadash', '28.135699', '85.638029', batchTime, {from: craftsman1});
 
             // add crafts to batch
             let craftsToAdd = [craftHash1, craftHash2];
@@ -380,7 +390,7 @@ contract('Supplychain', accounts => {
 
         beforeEach(async function() {
             // make batch
-            await this.contract.createBatch('Scarfs', '10 Pashminas', 'Nadash', 'Nepal', batchTime, {from: craftsman1});
+            await this.contract.createBatch('Scarfs', '10 Pashminas', 'Nadash', '28.135699', '85.638029', batchTime, {from: craftsman1});
 
             // add crafts to batch
             let craftsToAdd = [craftHash1, craftHash2];
@@ -388,54 +398,43 @@ contract('Supplychain', accounts => {
         });
 
         it('can check craft authenticity', async function() {
-            let craftInfo = await this.contract.getCraftInfo(craftHash2, {from: consumer});
+            let craftInfo = await this.contract.getCraftInfo(craftHash1, {from: consumer});
 
-                let converted = (craftInfo.prod_time).toString();
-                craftInfo.prod_time = converted;
-                craftInfo[5] = converted;
-    
-                assert.deepEqual(
-                    craftInfo,
-                    {
-                        '0': 'Wooden Box',
-                        '1': 'Beautiful Wooden Box',
-                        '2': 'Nadash',
-                        '3':  craftsman1,
-                        '4': 'Nepal',
-                        '5': time2.toString(),
-                        description: 'Beautiful Wooden Box',
-                        name: 'Wooden Box',
-                        producer: 'Nadash',
-                        producer_id:  craftsman1,
-                        prod_loc: 'Nepal',
-                        prod_time: time2.toString()
-                    }
-                );
+            let name = craftInfo.name;
+            let description = craftInfo.description;
+            let producer = craftInfo.producer;
+            let producer_id = craftInfo.producer_id;
+            let prod_lat = craftInfo.prod_lat;
+            let prod_lng = craftInfo.prod_lng;
+            let prod_time = craftInfo.prod_time;
+
+            assert.equal(name, 'Scarf');
+            assert.equal(description, 'Beautiful Pashmina Scarf');
+            assert.equal(producer, 'Nadash');
+            assert.equal(producer_id, craftsman1);
+            assert.equal(prod_lat, '28.135699');
+            assert.equal(prod_lng, '85.638029');
+            assert.equal(prod_time.toString(), time1.toString());
         });
 
         it('can check batch history', async function(){
             let batchInfo = await this.contract.getBatchInfo(batchHash, {from: consumer});
-            let converted = (batchInfo.batch_time).toString();
-            batchInfo.batch_time = converted;
-            batchInfo[5] = converted;
 
-            assert.deepEqual(
-                batchInfo,
-                {
-                    '0': 'Scarfs',
-                    '1': '10 Pashminas',
-                    '2': 'Nadash',
-                    '3':  craftsman1,
-                    '4': 'Nepal',
-                    '5': batchTime.toString(),
-                    description: '10 Pashminas',
-                    name: 'Scarfs',
-                    producer: 'Nadash',
-                    producer_id:  craftsman1,
-                    batch_loc: 'Nepal',
-                    batch_time: batchTime.toString()
-                }
-            )
+            let name = batchInfo.name;
+            let description = batchInfo.description;
+            let producer = batchInfo.producer;
+            let producer_id = batchInfo.producer_id;
+            let batch_lat = batchInfo.batch_lat;
+            let batch_lng = batchInfo.batch_lng;
+            let batch_time = batchInfo.batch_time;
+
+            assert.equal(name, 'Scarfs');
+            assert.equal(description, '10 Pashminas');
+            assert.equal(producer, 'Nadash');
+            assert.equal(producer_id, craftsman1);
+            assert.equal(batch_lat, '28.135699');
+            assert.equal(batch_lng, '85.638029');
+            assert.equal(batch_time.toString(), batchTime.toString());
         });
 
     });

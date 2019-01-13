@@ -3,7 +3,7 @@ pragma solidity >=0.5.0;
 import "../craftbase/Supplychain.sol";
 
 /// Provides basic authorization control
-contract Ownable is Supplychain {
+contract Ownable {
   address private origOwner;
 
   // Define an Event
