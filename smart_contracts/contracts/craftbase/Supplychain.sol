@@ -24,11 +24,6 @@ contract Supplychain is Ownable, CraftsmanRole, AggregatorRole, RetailerRole, Co
   Craft.Registry craftRegistry; 
   Batch.Registry batchRegistry;
 
-  // Define a public mapping 'itemsHistory' that maps the UPC to an array of TxHash, 
-  // that track its journey through the supply chain -- to be sent from DApp.
-  mapping (uint => string[]) craftHistory;
-  mapping (uint => string[]) batchHistory;
-
   // Data structures for information access
   mapping(uint => uint) craftsForSaleMap;
   mapping(uint => uint) batchesForSaleMap;

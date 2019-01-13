@@ -2,79 +2,169 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Craft Supplychain</title>
-  <link rel="stylesheet" type="text/css" href="style.css">
-
-  <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
-</head>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Craft Supplychain</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="style.css">
 <body>
-  <div class="container">
-    <h1>Craft Supplychain</h1>
-
-    <div class="row">
-      <h2>Claim a star</h2>
-      <label class="bold">Star Name:</label>
-      <input type="text" id="star-name">
+    <div class="container">
+        <h1 style="text-align: center;">Original Crafts Supplychain</h1>
+        <hr>
+        <p style="text-align: center;">Get unique crafts from craftsmen around the world, proven to be authentic.</p>
     </div>
 
-    <div class="row">
-      <label class="bold">Star Story:</label>
-      <input type="text" id="star-story">
+    <div id="role-management">
+        <h2>Role Management</h2>
+        <div class="form-group">
+            User Address (Please unlock Metamask if you don't see your address)
+            <br>
+            <input class="input-field" type="string" id="user-address" name="user-address"><br>
+            <div class=button-div>
+                <button class="btn-fetchOne" id="get-role" type="button" onclick=getRoleButtonClicked()>Get Roles</button>
+                <br>
+                <button class="btn-fetchOne" id="toggle-craftsman" type="button" onclick=toggleCraftsman()>Craftsman</button>
+                <button class="btn-fetchOne" id="toggle-aggregator" type="button" onclick=toggleAggregator()>Aggregator</button>
+                <button class="btn-fetchOne" id="toggle-retailer" type="button" onclick=toggleRetailer()>Retailer</button>
+                <button class="btn-fetchOne" id="toggle-consumer" type="button" onclick=toggleConsumer()>Consumer</button>
+            </div>
+            <div id="role-container"></div>
+
+        </div>
+    </div>
+    <div id="check-auth">
+        <h2>Check Authenticity</h2>
+        <div class="form-group">
+            UPC
+            <br>
+            <input class="input-field" type="string" id="upc" name="upc" value="41039060047483492446692882133403884507624726573212087824057476025678264805805"><br>
+            <div class=button-div>
+                <button class="btn-fetchOne" id="get-craftinfo" type="button" onclick=craftInfoButtonClicked()>Get Craft Info</button>
+            </div>
+            <div>
+                <ul id="info-container">
+                    <li><b>Name: </b></li>
+                    <li><b>Description: </b></li>
+                    <li><b>Producer: </b></li>
+                    <li><b>Producer ID: </b></li>
+                    <li><b>Latitude: </b></li>
+                    <li><b>Longitude: </b></li>
+                    <li><b>Time: </b></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div id="craftsman-area">
+        <div id="start-production">
+            <h2>Buy Raw Material (start production)</h2>
+            <div class="form-group">
+                Craft Name
+                <br>
+                <input class="input-field" type="string" id="craft-name" name="craft-name" value="Scarf"><br>
+                Description
+                <br>
+                <input class="input-field" type="string" id="craft-description" name="craft-description" value="Beautiful Pashmina Scarf"><br>
+                Producer
+                <br>
+                <input class="input-field" type="string" id="craft-producer" name="craft-producer" value="Nadash"><br>
+                Location Latitude
+                <br>
+                <input class="input-field" type="string" id="craft-lat" name="craft-lat" value="28.135699"><br>
+                Location Longitude
+                <br>
+                <input class="input-field" type="string" id="craft-lng" name="craft-lng" value="85.638029"><br>
+                <div class=button-div>
+                    <button class="btn-fetchOne" id="get-craftinfo" type="button" onclick=startProductionClicked()>Start Production</button>
+                </div>
+                <div id="start-production-info"></div>
+            </div>
+        </div>
+    </div>
+    <!-- 
+    <div id="">
+        <h2>Product Overview</h2>
+        <div class="form-group">
+            SKU
+            <br>
+            <input class="input-field" type="number" id="sku" name="sku" value=1><br>
+            UPC
+            <br>
+            <input type="number" id="upc" name="upc" value=1><br>
+            Current Owner ID
+            <br>
+            <input type="text" id="ownerID" name="ownerID" value="0x963865f57804b38459dd4b2da2f760211a200438" size="50"><br>
+            <div class=button-div>
+                <button class="btn-fetchOne" id="button" type="button" data-id="9">Fetch Data 1</button>
+                <button class="btn-fetchTwo" id="button" type="button" data-id="10">Fetch Data 2</button>
+            </div>
+        </div>
+        <div class=form-break></div>
+        <h2>Farm Details</h2>
+        <div class="form-group">
+            Farmer ID
+            <br>
+            <input type="text" id="originFarmerID" name="originFarmerID" value="0x99c289eb2aacec289631a5ddf62cf27a63d4494f"
+                size="50"><br>
+            Farm Name
+            <br>
+            <input type="text" id="originFarmName" name="originFarmName" value="John Doe"><br>
+            Farm Information
+            <br>
+            <input type="text" id="originFarmInformation" name="originFarmInformation" value="Yarra Valley"><br>
+            Farm Latitude
+            <br>
+            <input type="text" id="originFarmLatitude" name="originFarmLatitude" value="-38.239770"><br>
+            Farm Longitude
+            <br>
+            <input type="text" id="originFarmLongitude" name="originFarmLongitude" value="144.341490"><br>
+            <br>
+            <button class="btn-harvest" id="button" type="button" data-id="1">Harvest</button>
+            <button class="btn-process" id="button" type="button" data-id="2">Process</button>
+            <button class="btn-pack" id="button" type="button" data-id="3">Pack</button>
+            <button class="btn-forsale" id="button" type="button" data-id="4">ForSale</button>
+        </div>
+        <div class=form-break></div>
+        <h2>Product Details</h2>
+        <div class="form-group">
+            Product Notes
+            <br>
+            <input type="text" id="productNotes" name="productNotes" value="Best beans for Espresso" size="60"><br>
+            Product Price
+            <br>
+            <input type="number" id="productPrice" name="productPrice" value=1>ETH<br>
+            Distributor ID
+            <br>
+            <input type="text" id="distributorID" name="distributorID" value="0xf1b1bcd24dad92303dd9fe78be639f7bcf9c238d"
+                size="50">
+            <br>
+            Retailer ID
+            <br>
+            <input type="text" id="retailerID" name="retailerID" value="0x0fb2bfefd526966c87efa19f6693d50971763fc2"
+                size="50"><br>
+            Distributor ID
+            <br>
+            <input type="text" id="consumerID" name="consumerID" value="0x5d777e9127b28fb119e81a6304278a0a21bef1c4"
+                size="50"><br>
+            <br>
+            <button class="btn-buy" id="button" type="button" data-id="5">Buy</button>
+            <button class="btn-ship" id="button" type="button" data-id="6">Ship</button>
+            <button class="btn-receive" id="button" type="button" data-id="7">Receive</button>
+            <button class="btn-purchase" id="button" type="button" data-id="8">Purchase</button>
+        </div>
+        <div class=form-break></div>
+        <hr>
     </div>
 
-    <div class="row">
-      <h3>Star coordinates:</h3>
+    <h2>Transaction History<span id="ftc-history"></span></h2>
+    <div>
+        <ul id="ftc-events">
+        </ul>
+        <br>
+        <hr>
     </div>
-    <div class="row">
-      <label class="bold">ra:</label>
-      <input type="text" id="star-ra">
-    </div>
-    <div class="row">
-      <label class="bold">dec:</label>
-      <input type="text" id="star-dec">
-    </div>
-    <div class="row">
-      <label class="bold">mag:</label>
-      <input type="text" id="star-mag">
-    </div>
-    <button id="claim-button" onclick="claimButtonClicked()">Claim Star</button>
-
-    <hr>
-
-    <h2>Get a star id</h2>
-    <div class="row">
-      <label class="bold">ra:</label>
-      <input type="text" id="star-id-ra">
-    </div>
-    <div class="row">
-      <label class="bold">dec:</label>
-      <input type="text" id="star-id-dec">
-    </div>
-    <div class="row">
-      <label class="bold">mag:</label>
-      <input type="text" id="star-id-mag">
-    </div>
-    <button id="id-button" onclick="idButtonClicked()">Get Star ID</button>
-    <div id="star-hash"></div>
-
-    <hr>
-
-    <div class="row">
-      <h2>Retrieve a star by id</h2>
-      <label class="bold">star id (hex):</label>
-      <input id="star-id">
-    </div>
-    <button id="get-button" onclick="getButtonClicked()">Get Star Info</button>
-    <ul id="star-info"></ul>
-
-
-  </div>
-
-  <script type="application/javascript" charset="utf-8" src="app.js"></script>
-
+    -->
+    <script src="web3js-0.20.06.min.js"></script>
+    <script src="app.js"></script>
 </body>
 
 </html>

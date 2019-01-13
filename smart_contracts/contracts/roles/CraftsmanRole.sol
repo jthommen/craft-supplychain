@@ -34,12 +34,12 @@ contract CraftsmanRole {
   }
 
   // Define a function 'addCraftsman' that adds this role
-  function addCraftsman(address account) public onlyCraftsman {
+  function addCraftsman(address account) public {
     _addCraftsman(account);
   }
 
   // Define a function 'renounceCraftsman' to renounce this role
-  function renounceCraftsman() public {
+  function renounceCraftsman() public onlyCraftsman {
     _removeCraftsman(msg.sender);
   }
 

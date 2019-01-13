@@ -31,12 +31,12 @@ contract AggregatorRole {
   }
 
   // Define a function 'addAggregator' that adds this role
-  function addAggregator(address account) public onlyAggregator {
+  function addAggregator(address account) public {
     _addAggregator(account);
   }
 
   // Define a function 'renounceAggregator' to renounce this role
-  function renounceAggregator() public {
+  function renounceAggregator() public onlyAggregator {
     _removeAggregator(msg.sender);
   }
 
