@@ -29,12 +29,15 @@ Without personal interaction trust is a major issue.
 
 --- 
 ## Part B - Implementation
-**Technologies Used:**
+**Contract address:** 0xfe1631C6B03aE0E3B7f30C0d975F8CA8C2bbDdFa
+
+**Technologies Used**
 
 * Node 10.15.0
 * NPM 6.4.1
 * ganache-cli 6.2.5
 * Truffle 5.0.1
+* Web3.js 0.20.6
 * http-server 0.11.1
 
 
