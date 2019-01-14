@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Craft Supplychain</title>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="style.css">
 <body>
@@ -56,23 +58,24 @@
     </div>
     <div id="craftsman-area">
         <div id="start-production">
-            <h2>Buy Raw Material (start production)</h2>
+            <h2>Production Step 1: Buy Raw Material</h2>
+            <h3>(start production)</h3>
             <div class="form-group">
                 Craft Name
                 <br>
-                <input class="input-field" type="string" id="craft-name" name="craft-name" value="Scarf"><br>
+                <input class="input-field" type="string" id="craft-name" name="craft-name" value="Wooden Box"><br>
                 Description
                 <br>
-                <input class="input-field" type="string" id="craft-description" name="craft-description" value="Beautiful Pashmina Scarf"><br>
+                <input class="input-field" type="string" id="craft-description" name="craft-description" value="Beautiful Wooden Box"><br>
                 Producer
                 <br>
                 <input class="input-field" type="string" id="craft-producer" name="craft-producer" value="Nadash"><br>
                 Location Latitude
                 <br>
-                <input class="input-field" type="string" id="craft-lat" name="craft-lat" value="28.135699"><br>
+                <input class="input-field" type="string" id="craft-lat" name="craft-lat" value="29.125872"><br>
                 Location Longitude
                 <br>
-                <input class="input-field" type="string" id="craft-lng" name="craft-lng" value="85.638029"><br>
+                <input class="input-field" type="string" id="craft-lng" name="craft-lng" value="84.569872"><br>
                 <div class=button-div>
                     <button class="btn-fetchOne" id="get-craftinfo" type="button" onclick=startProductionClicked()>Start Production</button>
                 </div>

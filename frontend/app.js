@@ -1158,7 +1158,7 @@ function startProductionClicked() {
 
     craftSupplychain.buyCraftMaterial(name, description, producer, lat, lng, time, function(error, result) {
         if(!error) {
-            container.innerHTML = `New materials for ${name} bought, production started`;
+            container.innerHTML = `New materials for ${name} bought, production started!`;
             alert(`Take not of the UPC: ${hash}`);
             console.log('New craft production started!');
         } else {
