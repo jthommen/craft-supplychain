@@ -23,7 +23,7 @@ library Batch {
     uint craft_count;
     State state;
     address destination;
-    uint batch_price;
+    uint price;
     address payable owner; // Metamask-Ethereum address of the current owner as the product moves through 8 stages
     address aggregator_id; // Metamask-Ethereum address of the Aggregator
     address retailer_id; // Metamask-Ethereum address of the Retailer

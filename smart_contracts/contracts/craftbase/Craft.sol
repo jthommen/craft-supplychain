@@ -19,7 +19,7 @@ library Craft {
     address producer_id; // msg.sender
     Loc loc;
     uint prod_time; // via JS in front_end
-    uint craft_price;
+    uint produprice;
     bool packaged; // default = false
     uint batch; // default = 0
     bool batched; // Part of big batch = true;
